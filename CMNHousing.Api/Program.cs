@@ -1,4 +1,4 @@
-using CMNHousing.Api.Data;
+using CMNHousing.AuthService.Data;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -6,6 +6,11 @@ using Microsoft.OpenApi.Models;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// ======================================================
+// CORS
+// ======================================================
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policy =>
@@ -16,6 +21,7 @@ builder.Services.AddCors(options =>
             .AllowAnyMethod();
     });
 });
+
 // ======================================================
 // Controllers
 // ======================================================
@@ -26,7 +32,7 @@ builder.Services.AddControllers();
 // Database - PostgreSQL
 // ======================================================
 
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
+builder.Services.AddDbContext<AuthDbContext>(options =>
     options.UseNpgsql(
         builder.Configuration.GetConnectionString("DefaultConnection")
     )
@@ -118,16 +124,19 @@ builder.Services.AddSwaggerGen(options =>
 // ======================================================
 
 var app = builder.Build();
+
+// ======================================================
+// CORS
+// ======================================================
+
 app.UseCors("AllowAll");
+
 // ======================================================
 // Swagger
 // ======================================================
 
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+app.UseSwagger();
+app.UseSwaggerUI();
 
 // ======================================================
 // Static Files

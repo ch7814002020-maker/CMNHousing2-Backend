@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace CMNHousing.Api.DTOs
+namespace CMNHousing.AuthService.DTOs
 {
     public class RegisterDto
     {

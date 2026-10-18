@@ -1,6 +1,7 @@
-﻿using CMNHousing.Api.Data;
-using CMNHousing.Api.DTOs;
+﻿using CMNHousing.Api.DTOs;
 using CMNHousing.Api.Models;
+using CMNHousing.AuthService.Data;
+using CMNHousing.AuthService.DTOs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -9,17 +10,17 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 
-namespace CMNHousing.Api.Controllers
+namespace CMNHousing.AuthService.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
     public class AuthController : ControllerBase
     {
-        private readonly ApplicationDbContext _context;
+        private readonly AuthDbContext _context;
         private readonly IConfiguration _configuration;
 
         public AuthController(
-            ApplicationDbContext context,
+            AuthDbContext context,
             IConfiguration configuration)
         {
             _context = context;
@@ -29,7 +30,6 @@ namespace CMNHousing.Api.Controllers
         // =========================================================
         // REGISTER
         // POST: api/Auth/register
-        // Public - creates Customer account
         // =========================================================
 
         [HttpPost("register")]
@@ -52,11 +52,9 @@ namespace CMNHousing.Api.Controllers
                 Email = dto.Email.Trim(),
                 Phone = dto.Phone?.Trim(),
 
-                // Password is stored as BCrypt hash
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword(
                     dto.Password),
 
-                // Public registration always creates Customer
                 Role = "Customer",
 
                 IsActive = true,
@@ -80,7 +78,6 @@ namespace CMNHousing.Api.Controllers
         // =========================================================
         // LOGIN
         // POST: api/Auth/login
-        // Public - returns JWT token
         // =========================================================
 
         [HttpPost("login")]
@@ -206,10 +203,6 @@ namespace CMNHousing.Api.Controllers
             var expiresInMinutes = int.Parse(
                 _configuration["Jwt:ExpiresInMinutes"] ?? "60");
 
-            // =====================================================
-            // JWT CLAIMS
-            // =====================================================
-
             var claims = new List<Claim>
             {
                 new Claim(
@@ -229,20 +222,12 @@ namespace CMNHousing.Api.Controllers
                     user.Role)
             };
 
-            // =====================================================
-            // JWT KEY
-            // =====================================================
-
             var key = new SymmetricSecurityKey(
                 Encoding.UTF8.GetBytes(jwtKey));
 
             var credentials = new SigningCredentials(
                 key,
                 SecurityAlgorithms.HmacSha256);
-
-            // =====================================================
-            // CREATE TOKEN
-            // =====================================================
 
             var token = new JwtSecurityToken(
                 issuer: issuer,
@@ -251,10 +236,6 @@ namespace CMNHousing.Api.Controllers
                 expires: DateTime.UtcNow.AddMinutes(
                     expiresInMinutes),
                 signingCredentials: credentials);
-
-            // =====================================================
-            // RETURN TOKEN STRING
-            // =====================================================
 
             return new JwtSecurityTokenHandler()
                 .WriteToken(token);
